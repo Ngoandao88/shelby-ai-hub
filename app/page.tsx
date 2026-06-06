@@ -5,13 +5,17 @@ export default function Home() {
   const [wallet, setWallet] = useState<string | null>(null);
 
   const connectWallet = async () => {
-    const petra = (window as any).petra;
-    if (!petra) {
-      alert('Please install Petra Wallet!\nhttps://petra.app');
-      return;
+    try {
+      const petra = (window as any).aptos;
+      if (!petra) {
+        alert('Please install Petra Wallet!\nhttps://petra.app');
+        return;
+      }
+      const res = await petra.connect();
+      setWallet(res.address);
+    } catch (e) {
+      alert('Connection failed: ' + e);
     }
-    const res = await petra.connect();
-    setWallet(res.address);
   };
 
   const models = [
