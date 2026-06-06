@@ -27,12 +27,11 @@ const DEMO_MODELS: Model[] = [
 
 function ModelDetail({ model, onBack, connected, onConnect }: { model: Model; onBack: () => void; connected: boolean; onConnect: () => void }) {
   const [downloading, setDownloading] = useState(false);
-  const [comingSoon, setComingSoon] = useState(false);
   const [liked, setLiked] = useState(false);
 
   const handleDownload = async () => {
     if (!connected) { onConnect(); return; }
-    if (model.price !== '0') { setComingSoon(true); return; }
+    if (model.price !== '0') { alert('🔒 Payment via ShelbyUSD coming soon! Stay tuned.'); return; }
     setDownloading(true);
     await new Promise(r => setTimeout(r, 2000));
     setDownloading(false);
@@ -375,7 +374,5 @@ export default function Home() {
     </AptosWalletAdapterProvider>
   );
 }
-
-
 
 
