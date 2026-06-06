@@ -78,7 +78,7 @@ function App() {
 
   const connectWallet = async () => {
     try {
-      const petra = (window as any).petra || (window as any).aptos;
+      const petra = (window as any).aptos || (window as any).petra || (window as any).martian;
       if (!petra) { alert('Install Petra Wallet: https://petra.app'); return; }
       const res = await petra.connect();
       setWallet(res.address);
