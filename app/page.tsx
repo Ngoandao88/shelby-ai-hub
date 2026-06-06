@@ -1,25 +1,34 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function Home() {
   const [wallet, setWallet] = useState<string | null>(null);
-  const [error, setError] = useState<string>('');
 
   const connectWallet = async () => {
     try {
-      setError('');
-      // @ts-ignore
-      const provider = window?.petra || window?.aptos;
-      if (!provider) {
-        setError('Petra Wallet not found!');
+      // Petra mới dùng AIP-62 wallet standard
+      const getAptosWallet = () => {
+        if ('aptos' in window) return (window as any).aptos;
+        if ('petra' in window) return (window as any).petra;
+        // AIP-62 standard
+        const wallets = (window as any).aptosWallets?.getWallets?.() || [];
+        return wallets[0] || null;
+      };
+
+      const wallet = getAptosWallet();
+      if (!wallet) {
+        window.open('https://petra.app', '_blank');
         return;
       }
-      await provider.disconnect().catch(() => {});
-      const res = await provider.connect();
-      const addr = res?.address || res?.publicKey || JSON.stringify(res);
-      setWallet(addr);
+
+      const response = await wallet.connect();
+      const address = response?.address?.toString() || response?.account?.address?.toString();
+      if (address) setWallet(address);
+      else setWallet('Connected!');
     } catch (e: any) {
-      setError(e?.message || String(e));
+      console.error(e);
+      if (e?.code === 4001) return; // user rejected
+      alert('Error: ' + (e?.message || e));
     }
   };
 
@@ -48,7 +57,6 @@ export default function Home() {
         <div className="inline-block border border-[#333] px-4 py-1 rounded-full text-xs text-orange-400 mb-8 tracking-widest">SHELBY PROTOCOL ✦ APTOS L1</div>
         <h1 className="text-6xl md:text-7xl font-black mb-6 leading-tight">Your AI Models.<br/><span className="text-[#444]">On-chain. Forever.</span></h1>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-10">Shelby AI Hub stores your AI model weights permanently on Shelby decentralized network, anchored to the Aptos blockchain.</p>
-        {error && <p className="text-red-400 mb-4">{error}</p>}
         {!wallet ? (
           <button onClick={connectWallet} className="bg-orange-500 hover:bg-orange-600 px-10 py-4 rounded-xl text-lg font-bold transition">Connect Wallet to Start</button>
         ) : (
