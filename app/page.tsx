@@ -1,40 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { AptosWalletAdapterProvider, useWallet } from '@aptos-labs/wallet-adapter-react';
 
-export default function Home() {
-  const [wallet, setWallet] = useState<string | null>(null);
-  const [error, setError] = useState('');
-
-  const connectWallet = async () => {
-    setError('');
-    try {
-      // Dùng đúng AIP-62 Wallet Standard
-      const { getAptosWallets } = await import('@aptos-labs/wallet-standard');
-      const { aptosWallets, on } = getAptosWallets();
-
-      let petraWallet = aptosWallets.find((w: any) => w.name === 'Petra');
-
-      if (!petraWallet) {
-        setError('Không tìm thấy Petra Wallet! Hãy cài tại petra.app');
-        return;
-      }
-
-      const connectFeature = petraWallet.features['aptos:connect'];
-      if (!connectFeature) {
-        setError('Petra không hỗ trợ connect feature');
-        return;
-      }
-
-      const result = await connectFeature.connect();
-      const address = result?.args?.address?.toString()
-        || result?.address?.toString()
-        || JSON.stringify(result);
-
-      setWallet(address);
-    } catch (e: any) {
-      setError(e?.message || String(e));
-    }
-  };
+function AppContent() {
+  const { connect, disconnect, connected, account } = useWallet();
+  const addr = account?.address?.toString();
 
   const models = [
     { name: 'LLaMA 7B', desc: "Meta's open-source LLM optimized for inference", type: 'GGUF', size: '4GB', price: '10 ShelbyUSD' },
@@ -46,14 +15,16 @@ export default function Home() {
     <main className="min-h-screen bg-[#0a0a0a] text-white font-sans">
       <nav className="flex justify-between items-center px-10 py-5 border-b border-[#1a1a1a]">
         <div className="text-2xl font-bold">Shelby <span className="text-orange-500">AI Hub</span></div>
-        {wallet ? (
+        {connected && addr ? (
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-sm text-gray-300">{wallet.slice(0,6)}...{wallet.slice(-4)}</span>
-            <button onClick={() => setWallet(null)} className="bg-[#222] px-4 py-2 rounded-lg text-sm">Disconnect</button>
+            <span className="text-sm text-gray-300">{addr.slice(0,6)}...{addr.slice(-4)}</span>
+            <button onClick={disconnect} className="bg-[#222] px-4 py-2 rounded-lg text-sm">Disconnect</button>
           </div>
         ) : (
-          <button onClick={connectWallet} className="bg-orange-500 hover:bg-orange-600 px-6 py-2 rounded-lg font-semibold transition">Connect Wallet</button>
+          <button onClick={() => connect('Petra')} className="bg-orange-500 hover:bg-orange-600 px-6 py-2 rounded-lg font-semibold transition">
+            Connect Wallet
+          </button>
         )}
       </nav>
 
@@ -61,12 +32,13 @@ export default function Home() {
         <div className="inline-block border border-[#333] px-4 py-1 rounded-full text-xs text-orange-400 mb-8 tracking-widest">SHELBY PROTOCOL ✦ APTOS L1</div>
         <h1 className="text-6xl md:text-7xl font-black mb-6 leading-tight">Your AI Models.<br/><span className="text-[#444]">On-chain. Forever.</span></h1>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-10">Shelby AI Hub stores your AI model weights permanently on Shelby decentralized network, anchored to the Aptos blockchain.</p>
-        {error && <p className="text-red-400 mb-4 text-sm bg-red-900/20 px-4 py-2 rounded-lg inline-block">{error}</p>}
-        {!wallet ? (
-          <button onClick={connectWallet} className="bg-orange-500 hover:bg-orange-600 px-10 py-4 rounded-xl text-lg font-bold transition">Connect Wallet to Start</button>
+        {!connected ? (
+          <button onClick={() => connect('Petra')} className="bg-orange-500 hover:bg-orange-600 px-10 py-4 rounded-xl text-lg font-bold transition">
+            Connect Wallet to Start
+          </button>
         ) : (
           <div className="inline-block bg-green-900/30 border border-green-500/30 px-8 py-3 rounded-xl">
-            <span className="text-green-400 font-bold">✅ Connected: {wallet.slice(0,6)}...{wallet.slice(-4)}</span>
+            <span className="text-green-400 font-bold">✅ Connected: {addr?.slice(0,6)}...{addr?.slice(-4)}</span>
           </div>
         )}
       </div>
@@ -83,8 +55,8 @@ export default function Home() {
                 <span className="border border-[#333] px-3 py-1 rounded-full text-xs">{m.size}</span>
               </div>
               <div className="text-orange-500 font-bold text-lg mb-4">{m.price}</div>
-              <button onClick={!wallet ? connectWallet : undefined} className="w-full bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] py-2 rounded-xl text-sm transition">
-                {wallet ? '⬇ Download' : 'Connect Wallet'}
+              <button onClick={!connected ? () => connect('Petra') : undefined} className="w-full bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] py-2 rounded-xl text-sm transition">
+                {connected ? '⬇ Download' : 'Connect Wallet'}
               </button>
             </div>
           ))}
@@ -92,8 +64,4 @@ export default function Home() {
       </div>
 
       <footer className="text-center py-8 text-gray-600 border-t border-[#111] text-sm">
-        Built on Shelby Protocol ✦ Aptos L1 | Shelby AI Hub 2025
-      </footer>
-    </main>
-  );
-}
+        Built on Shelby Protocol ✦ Aptos L1 | Shelby AI Hub
