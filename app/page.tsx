@@ -31,6 +31,7 @@ function ModelDetail({ model, onBack, connected, onConnect }: { model: Model; on
 
   const handleDownload = async () => {
     if (!connected) { onConnect(); return; }
+    if (model.price !== '0') { alert('?? Payment via ShelbyUSD coming soon! Stay tuned.'); return; }
     setDownloading(true);
     await new Promise(r => setTimeout(r, 2000));
     setDownloading(false);
@@ -373,3 +374,4 @@ export default function Home() {
     </AptosWalletAdapterProvider>
   );
 }
+
