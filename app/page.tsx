@@ -1,36 +1,42 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [wallet, setWallet] = useState<string | null>(null);
 
   const connectWallet = async () => {
     try {
-      // Petra mới dùng AIP-62 wallet standard
-      const getAptosWallet = () => {
-        if ('aptos' in window) return (window as any).aptos;
-        if ('petra' in window) return (window as any).petra;
-        // AIP-62 standard
-        const wallets = (window as any).aptosWallets?.getWallets?.() || [];
-        return wallets[0] || null;
-      };
-
-      const wallet = getAptosWallet();
-      if (!wallet) {
-        window.open('https://petra.app', '_blank');
-        return;
+      // Aptos Wallet Standard AIP-62
+      const aptosWallets = (window as any).aptosWallets;
+      if (aptosWallets) {
+        const wallets = aptosWallets.getWallets();
+        if (wallets.length > 0) {
+          const w = wallets[0];
+          const features = w.features['aptos:connect'];
+          const res = await features.connect();
+          setWallet(res.account.address.toString());
+          return;
+        }
       }
 
-      const response = await wallet.connect();
-      const address = response?.address?.toString() || response?.account?.address?.toString();
-      if (address) setWallet(address);
-      else setWallet('Connected!');
+      // Fallback: dùng registerWallet event
+      window.dispatchEvent(new Event('aptos:connect'));
+      alert('Vui lòng chọn ví trong Petra extension!');
     } catch (e: any) {
       console.error(e);
-      if (e?.code === 4001) return; // user rejected
-      alert('Error: ' + (e?.message || e));
     }
   };
+
+  useEffect(() => {
+    // Lắng nghe wallet standard
+    const handler = (event: any) => {
+      if (event.detail?.account?.address) {
+        setWallet(event.detail.account.address.toString());
+      }
+    };
+    window.addEventListener('aptos:accountChange', handler);
+    return () => window.removeEventListener('aptos:accountChange', handler);
+  }, []);
 
   const models = [
     { name: 'LLaMA 7B', desc: "Meta's open-source LLM optimized for inference", type: 'GGUF', size: '4GB', price: '10 ShelbyUSD' },
