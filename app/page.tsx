@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from '@aptos-labs/wallet-adapter-react';
 
@@ -26,21 +26,22 @@ const DEMO_MODELS: Model[] = [
 ];
 
 function ModelDetail({ model, onBack, connected, onConnect }: { model: Model; onBack: () => void; connected: boolean; onConnect: () => void }) {
-  const [downloading, setDownloading] = useState(false);`r`n  const [comingSoon, setComingSoon] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [liked, setLiked] = useState(false);
 
   const handleDownload = async () => {
     if (!connected) { onConnect(); return; }
-    if (model.price !== "0") { setComingSoon(true); return; }`r`n    setDownloading(true);
+    if (model.price !== '0') { alert('?? Payment via ShelbyUSD coming soon! Stay tuned.'); return; }
+    setDownloading(true);
     await new Promise(r => setTimeout(r, 2000));
     setDownloading(false);
-    alert('âœ… Download started! File will be saved from IPFS.');
+    alert('✅ Download started! File will be saved from IPFS.');
   };
 
   return (
     <div className="max-w-4xl mx-auto px-10 pb-24 pt-8">
       <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition">
-        â† Back to Marketplace
+        ← Back to Marketplace
       </button>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* LEFT */}
@@ -55,7 +56,7 @@ function ModelDetail({ model, onBack, connected, onConnect }: { model: Model; on
               </div>
             </div>
             <button onClick={() => setLiked(!liked)} className={`flex items-center gap-1 px-4 py-2 rounded-xl border transition ${liked ? 'border-red-500/50 text-red-400' : 'border-[#333] text-gray-400 hover:text-white'}`}>
-              {liked ? 'â¤ï¸' : 'ðŸ¤'} {model.likes + (liked ? 1 : 0)}
+              {liked ? '❤️' : '🤍'} {model.likes + (liked ? 1 : 0)}
             </button>
           </div>
 
@@ -106,11 +107,11 @@ function ModelDetail({ model, onBack, connected, onConnect }: { model: Model; on
             </div>
 
             <button onClick={handleDownload} disabled={downloading} className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 py-4 rounded-xl font-bold text-lg transition mb-3">
-              {downloading ? 'â³ Processing...' : connected ? (model.price === '0' ? 'â¬‡ Download Free' : 'ðŸ’³ Buy & Download') : 'ðŸ”— Connect to Download'}
+              {downloading ? '⏳ Processing...' : connected ? (model.price === '0' ? '⬇ Download Free' : '💳 Buy & Download') : '🔗 Connect to Download'}
             </button>
 
             <button className="w-full bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] py-3 rounded-xl text-sm transition mb-6">
-              ðŸ”— Share Model
+              🔗 Share Model
             </button>
 
             <div className="border-t border-[#1e1e1e] pt-4">
@@ -195,7 +196,7 @@ function AppContent() {
           )}
         </nav>
         <ModelDetail model={selectedModel} onBack={() => setSelectedModel(null)} connected={connected} onConnect={() => connect('Petra')} />
-        <footer className="text-center py-8 text-gray-600 border-t border-[#111] text-sm">Shelby AI Hub âœ¦ Decentralized Hugging Face on Aptos L1</footer>
+        <footer className="text-center py-8 text-gray-600 border-t border-[#111] text-sm">Shelby AI Hub ✦ Decentralized Hugging Face on Aptos L1</footer>
       </main>
     );
   }
@@ -226,12 +227,12 @@ function AppContent() {
 
       {!connected && (
         <div className="text-center pt-24 pb-16 px-10">
-          <div className="inline-block border border-[#333] px-4 py-1 rounded-full text-xs text-orange-400 mb-8 tracking-widest">DECENTRALIZED HUGGING FACE âœ¦ APTOS L1</div>
+          <div className="inline-block border border-[#333] px-4 py-1 rounded-full text-xs text-orange-400 mb-8 tracking-widest">DECENTRALIZED HUGGING FACE ✦ APTOS L1</div>
           <h1 className="text-6xl md:text-7xl font-black mb-6 leading-tight">Your AI Models.<br/><span className="text-[#444]">On-chain. Forever.</span></h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-10">Upload, share & monetize AI model weights on Shelby decentralized network, anchored to the Aptos blockchain.</p>
           <button onClick={() => connect('Petra')} className="bg-orange-500 hover:bg-orange-600 px-10 py-4 rounded-xl text-lg font-bold transition">Connect Wallet to Start</button>
           <div className="flex justify-center gap-12 mt-16 text-center">
-            <div><div className="text-3xl font-black text-orange-500">âˆž</div><div className="text-gray-400 text-sm mt-1">Storage</div></div>
+            <div><div className="text-3xl font-black text-orange-500">∞</div><div className="text-gray-400 text-sm mt-1">Storage</div></div>
             <div><div className="text-3xl font-black text-orange-500">0%</div><div className="text-gray-400 text-sm mt-1">Platform Fee</div></div>
             <div><div className="text-3xl font-black text-orange-500">L1</div><div className="text-gray-400 text-sm mt-1">Aptos Chain</div></div>
           </div>
@@ -258,11 +259,11 @@ function AppContent() {
                 </div>
                 <div className="flex justify-between items-center mb-4">
                   <div className="text-xs text-gray-500">by {m.owner}</div>
-                  <div className="text-xs text-gray-500">â¬‡ {m.downloads} Â· â¤ï¸ {m.likes}</div>
+                  <div className="text-xs text-gray-500">⬇ {m.downloads} · ❤️ {m.likes}</div>
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="text-orange-500 font-bold">{m.price === '0' ? 'Free' : m.price + ' ShelbyUSD'}</div>
-                  <div className="text-xs text-orange-400 opacity-0 group-hover:opacity-100 transition">View details â†’</div>
+                  <div className="text-xs text-orange-400 opacity-0 group-hover:opacity-100 transition">View details →</div>
                 </div>
               </div>
             ))}
@@ -310,17 +311,17 @@ function AppContent() {
             <div>
               <label className="text-sm text-gray-400 mb-2 block">Model File *</label>
               <label className="w-full bg-[#111] border-2 border-dashed border-[#333] rounded-xl p-8 flex flex-col items-center cursor-pointer hover:border-orange-500/50 transition">
-                <div className="text-4xl mb-3">ðŸ“¦</div>
+                <div className="text-4xl mb-3">📦</div>
                 <div className="text-gray-300 font-medium">{selectedFile ? selectedFile.name : 'Click to select model file'}</div>
                 <div className="text-gray-500 text-sm mt-1">{selectedFile ? (selectedFile.size / (1024*1024*1024)).toFixed(2) + ' GB' : 'GGUF, safetensors, PyTorch, ONNX...'}</div>
                 <input type="file" className="hidden" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
               </label>
             </div>
             {uploadProgress && (
-              <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl px-4 py-3 text-orange-400 text-sm">â³ {uploadProgress}</div>
+              <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl px-4 py-3 text-orange-400 text-sm">⏳ {uploadProgress}</div>
             )}
             <button onClick={handleUpload} disabled={uploading} className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 py-4 rounded-xl font-bold text-lg transition">
-              {uploading ? 'Uploading...' : 'ðŸš€ Upload to Shelby'}
+              {uploading ? 'Uploading...' : '🚀 Upload to Shelby'}
             </button>
           </div>
         </div>
@@ -337,7 +338,7 @@ function AppContent() {
           </div>
           {myModels.length === 0 ? (
             <div className="text-center py-24 text-gray-500">
-              <div className="text-6xl mb-4">ðŸ“­</div>
+              <div className="text-6xl mb-4">📭</div>
               <div className="text-xl mb-2">No models yet</div>
               <button onClick={() => setTab('upload')} className="mt-6 bg-orange-500 hover:bg-orange-600 px-8 py-3 rounded-xl font-semibold transition text-white">Upload Now</button>
             </div>
@@ -360,7 +361,7 @@ function AppContent() {
       )}
 
       <footer className="text-center py-8 text-gray-600 border-t border-[#111] text-sm">
-        Shelby AI Hub âœ¦ Decentralized Hugging Face on Aptos L1
+        Shelby AI Hub ✦ Decentralized Hugging Face on Aptos L1
       </footer>
     </main>
   );
@@ -373,3 +374,4 @@ export default function Home() {
     </AptosWalletAdapterProvider>
   );
 }
+
