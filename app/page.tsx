@@ -6,15 +6,27 @@ export default function Home() {
 
   const connectWallet = async () => {
     try {
-      const petra = (window as any).aptos;
-      if (!petra) {
-        alert('Please install Petra Wallet!\nhttps://petra.app');
+      const { Aptos, AptosConfig, Network } = await import('@aptos-labs/ts-sdk');
+      const wallets = (window as any).aptos?.wallets || [];
+      
+      // Try Petra new SDK
+      if ((window as any).petra) {
+        const response = await (window as any).petra.connect();
+        setWallet(response.address);
         return;
       }
-      const res = await petra.connect();
-      setWallet(res.address);
-    } catch (e) {
-      alert('Connection failed: ' + e);
+      
+      // Try old aptos object
+      if ((window as any).aptos) {
+        const response = await (window as any).aptos.connect();
+        setWallet(response.address);
+        return;
+      }
+
+      alert('Please install Petra Wallet!\nhttps://petra.app');
+    } catch (e: any) {
+      console.error(e);
+      alert('Error: ' + e.message);
     }
   };
 
