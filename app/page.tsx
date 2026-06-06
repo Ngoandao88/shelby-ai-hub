@@ -1,47 +1,69 @@
 'use client';
 import { useState, useEffect } from 'react';
 
+declare global {
+  interface Window {
+    aptos?: any;
+    petra?: any;
+  }
+}
+
 export default function Home() {
   const [wallet, setWallet] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   const connectWallet = async () => {
+    setError('');
     try {
-      // Aptos Wallet Standard AIP-62
-      const aptosWallets = (window as any).aptosWallets;
-      if (aptosWallets) {
-        const wallets = aptosWallets.getWallets();
-        if (wallets.length > 0) {
-          const w = wallets[0];
-          const features = w.features['aptos:connect'];
-          const res = await features.connect();
-          setWallet(res.account.address.toString());
-          return;
+      // Chờ extension inject vào window
+      await new Promise(r => setTimeout(r, 300));
+
+      let provider: any = null;
+
+      // AIP-62: duyệt qua danh sách ví đã đăng ký
+      const registered = (window as any).registeredWallets
+        || (window as any).aptosWallets?.getWallets?.()
+        || [];
+
+      for (const w of registered) {
+        if (w?.name?.toLowerCase().includes('petra')) {
+          provider = w;
+          break;
         }
       }
 
-      // Fallback: dùng registerWallet event
-      window.dispatchEvent(new Event('aptos:connect'));
-      alert('Vui lòng chọn ví trong Petra extension!');
+      // Fallback cũ
+      if (!provider) provider = window.petra || window.aptos;
+
+      if (!provider) {
+        setError('Không tìm thấy Petra Wallet!');
+        window.open('https://petra.app', '_blank');
+        return;
+      }
+
+      // Kết nối
+      let res: any;
+      if (typeof provider.connect === 'function') {
+        res = await provider.connect();
+      } else if (typeof provider.features?.['aptos:connect']?.connect === 'function') {
+        res = await provider.features['aptos:connect'].connect();
+      }
+
+      const address = res?.address || res?.account?.address || res?.publicKey;
+      if (address) {
+        setWallet(typeof address === 'string' ? address : address.toString());
+      } else {
+        setError('Không lấy được địa chỉ ví: ' + JSON.stringify(res));
+      }
     } catch (e: any) {
-      console.error(e);
+      setError(e?.message || String(e));
     }
   };
 
-  useEffect(() => {
-    // Lắng nghe wallet standard
-    const handler = (event: any) => {
-      if (event.detail?.account?.address) {
-        setWallet(event.detail.account.address.toString());
-      }
-    };
-    window.addEventListener('aptos:accountChange', handler);
-    return () => window.removeEventListener('aptos:accountChange', handler);
-  }, []);
-
   const models = [
     { name: 'LLaMA 7B', desc: "Meta's open-source LLM optimized for inference", type: 'GGUF', size: '4GB', price: '10 ShelbyUSD' },
-    { name: 'Stable Diffusion XL', desc: 'High-resolution image generation by Stability AI', type: 'safetensors', size: '6.5GB', price: '15 ShelbyUSD' },
-    { name: 'Whisper Large', desc: "OpenAI's speech recognition supporting 99 languages", type: 'PyTorch', size: '2.9GB', price: 'Free' },
+    { name: 'Stable Diffusion XL', desc: 'High-res image generation by Stability AI', type: 'safetensors', size: '6.5GB', price: '15 ShelbyUSD' },
+    { name: 'Whisper Large', desc: "OpenAI's speech recognition, 99 languages", type: 'PyTorch', size: '2.9GB', price: 'Free' },
   ];
 
   return (
@@ -63,38 +85,6 @@ export default function Home() {
         <div className="inline-block border border-[#333] px-4 py-1 rounded-full text-xs text-orange-400 mb-8 tracking-widest">SHELBY PROTOCOL ✦ APTOS L1</div>
         <h1 className="text-6xl md:text-7xl font-black mb-6 leading-tight">Your AI Models.<br/><span className="text-[#444]">On-chain. Forever.</span></h1>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-10">Shelby AI Hub stores your AI model weights permanently on Shelby decentralized network, anchored to the Aptos blockchain.</p>
+        {error && <p className="text-red-400 mb-4 text-sm">{error}</p>}
         {!wallet ? (
-          <button onClick={connectWallet} className="bg-orange-500 hover:bg-orange-600 px-10 py-4 rounded-xl text-lg font-bold transition">Connect Wallet to Start</button>
-        ) : (
-          <div className="inline-block bg-green-900/30 border border-green-500/30 px-8 py-3 rounded-xl">
-            <span className="text-green-400 font-bold">✅ Connected: {wallet.slice(0,6)}...{wallet.slice(-4)}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="max-w-6xl mx-auto px-10 pb-24">
-        <h2 className="text-3xl font-bold text-center mb-12">Available Models</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {models.map((m) => (
-            <div key={m.name} className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-6 hover:border-orange-500/30 transition">
-              <h3 className="text-xl font-bold mb-2">{m.name}</h3>
-              <p className="text-gray-400 text-sm mb-4">{m.desc}</p>
-              <div className="flex gap-2 flex-wrap mb-4">
-                <span className="border border-[#333] px-3 py-1 rounded-full text-xs">{m.type}</span>
-                <span className="border border-[#333] px-3 py-1 rounded-full text-xs">{m.size}</span>
-              </div>
-              <div className="text-orange-500 font-bold text-lg mb-4">{m.price}</div>
-              <button onClick={!wallet ? connectWallet : undefined} className="w-full bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] py-2 rounded-xl text-sm transition">
-                {wallet ? '⬇ Download' : 'Connect Wallet'}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <footer className="text-center py-8 text-gray-600 border-t border-[#111] text-sm">
-        Built on Shelby Protocol ✦ Aptos L1 | Shelby AI Hub 2025
-      </footer>
-    </main>
-  );
-}
+          <button onClick={connec
