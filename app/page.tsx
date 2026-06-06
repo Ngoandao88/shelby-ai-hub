@@ -1,34 +1,29 @@
 'use client';
 import { useState } from 'react';
+import { useWallet, AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react';
 
-export default function Home() {
-  const [wallet, setWallet] = useState<string | null>(null);
+function WalletButton() {
+  const { connect, disconnect, account, connected, wallets } = useWallet();
 
-  const connectWallet = async () => {
-    try {
-      const { Aptos, AptosConfig, Network } = await import('@aptos-labs/ts-sdk');
-      const wallets = (window as any).aptos?.wallets || [];
-      
-      // Try Petra new SDK
-      if ((window as any).petra) {
-        const response = await (window as any).petra.connect();
-        setWallet(response.address);
-        return;
-      }
-      
-      // Try old aptos object
-      if ((window as any).aptos) {
-        const response = await (window as any).aptos.connect();
-        setWallet(response.address);
-        return;
-      }
+  if (connected && account) {
+    return (
+      <div className="flex items-center gap-3">
+        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+        <span className="text-sm text-gray-300">{account.address.slice(0,6)}...{account.address.slice(-4)}</span>
+        <button onClick={disconnect} className="bg-[#222] px-4 py-2 rounded-lg text-sm">Disconnect</button>
+      </div>
+    );
+  }
 
-      alert('Please install Petra Wallet!\nhttps://petra.app');
-    } catch (e: any) {
-      console.error(e);
-      alert('Error: ' + e.message);
-    }
-  };
+  return (
+    <button onClick={() => connect(wallets[0]?.name)} className="bg-orange-500 hover:bg-orange-600 px-6 py-2 rounded-lg font-semibold transition">
+      Connect Wallet
+    </button>
+  );
+}
+
+function MainContent() {
+  const { connect, account, connected, wallets } = useWallet();
 
   const models = [
     { name: 'LLaMA 7B', desc: "Meta's open-source large language model optimized for inference", type: 'GGUF', size: '4GB', price: '10 ShelbyUSD' },
@@ -40,25 +35,18 @@ export default function Home() {
     <main className="min-h-screen bg-[#0a0a0a] text-white font-sans">
       <nav className="flex justify-between items-center px-10 py-5 border-b border-[#1a1a1a]">
         <div className="text-2xl font-bold">Shelby <span className="text-orange-500">AI Hub</span></div>
-        {wallet ? (
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-sm text-gray-300">{wallet.slice(0,6)}...{wallet.slice(-4)}</span>
-          </div>
-        ) : (
-          <button onClick={connectWallet} className="bg-orange-500 hover:bg-orange-600 px-6 py-2 rounded-lg font-semibold transition">Connect Wallet</button>
-        )}
+        <WalletButton />
       </nav>
 
       <div className="text-center pt-24 pb-16 px-10">
         <div className="inline-block border border-[#333] px-4 py-1 rounded-full text-xs text-orange-400 mb-8 tracking-widest">SHELBY PROTOCOL ✦ APTOS L1</div>
         <h1 className="text-6xl md:text-7xl font-black mb-6 leading-tight">Your AI Models.<br/><span className="text-[#444]">On-chain. Forever.</span></h1>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-10">Shelby AI Hub stores your AI model weights permanently on Shelby decentralized network, anchored to the Aptos blockchain.</p>
-        {!wallet ? (
-          <button onClick={connectWallet} className="bg-orange-500 hover:bg-orange-600 px-10 py-4 rounded-xl text-lg font-bold transition">Connect Wallet to Start</button>
+        {!connected ? (
+          <button onClick={() => connect(wallets[0]?.name)} className="bg-orange-500 hover:bg-orange-600 px-10 py-4 rounded-xl text-lg font-bold transition">Connect Wallet to Start</button>
         ) : (
           <div className="inline-block bg-green-900/30 border border-green-500/30 px-8 py-3 rounded-xl">
-            <span className="text-green-400 font-bold">✅ Connected: {wallet.slice(0,6)}...{wallet.slice(-4)}</span>
+            <span className="text-green-400 font-bold">✅ Connected: {account?.address.slice(0,6)}...{account?.address.slice(-4)}</span>
           </div>
         )}
       </div>
@@ -75,8 +63,8 @@ export default function Home() {
                 <span className="border border-[#333] px-3 py-1 rounded-full text-xs">{m.size}</span>
               </div>
               <div className="text-orange-500 font-bold text-lg mb-4">{m.price}</div>
-              <button onClick={!wallet ? connectWallet : undefined} className="w-full bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] py-2 rounded-xl text-sm transition">
-                {wallet ? '⬇ Download' : 'Connect Wallet'}
+              <button onClick={!connected ? () => connect(wallets[0]?.name) : undefined} className="w-full bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] py-2 rounded-xl text-sm transition">
+                {connected ? '⬇ Download' : 'Connect Wallet'}
               </button>
             </div>
           ))}
@@ -87,5 +75,13 @@ export default function Home() {
         Built on Shelby Protocol ✦ Aptos L1 | Shelby AI Hub 2025
       </footer>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <AptosWalletAdapterProvider autoConnect={false}>
+      <MainContent />
+    </AptosWalletAdapterProvider>
   );
 }
